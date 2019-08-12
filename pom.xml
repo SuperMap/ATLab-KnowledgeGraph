@@ -1,0 +1,111 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.supermap</groupId>
+	<artifactId>geokg</artifactId> <!-- 包名 -->
+	<version>1.0</version>    <!-- 打包的版本 -->
+	<packaging>jar</packaging> <!-- 打包方式，还有war等 -->
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>7</maven.compiler.source>   <!-- 通过jdk1.7编译，也可以设置为1.8 -->
+		<maven.compiler.target>7</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- <dependency> <groupId>com.supermap</groupId> <artifactId>data</artifactId> 
+			<version>9.0</version> <scope>system</scope> <systemPath>${project.basedir}/lib/com.supermap.data.jar</systemPath> 
+			</dependency> -->
+		<!-- https://mvnrepository.com/artifact/com.vividsolutions/jts -->
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts</artifactId>
+			<version>1.13</version>
+		</dependency>
+		<dependency>
+			<groupId>io.sgr</groupId>
+			<artifactId>s2-geometry-library-java</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-runtime -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-runtime</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.supermap</groupId>
+			<artifactId>data</artifactId>
+			<version>9.1.2</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.5.5</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<!-- 打包源码 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.0</version>
+				<!-- 绑定source插件到Maven的生命周期,并在生命周期后执行绑定的source的goal -->
+				<executions>
+					<execution>
+						<!-- 绑定source插件到Maven的生命周期 -->
+						<phase>compile</phase>
+						<!--在生命周期后执行绑定的source插件的goals -->
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<!-- 打包时将所有的maven依赖包复制到 <outputDirectory>指定的文件夹，不包括本地jar包 <plugin> <groupId>org.apache.maven.plugins</groupId> 
+		<artifactId>maven-dependency-plugin</artifactId> <version>2.10</version> 
+		<executions> <execution> <id>copy-dependencies</id> <phase>package</phase> 
+		<goals> <goal>copy-dependencies</goal> </goals> <configuration> <outputDirectory>${project.build.directory}/lib</outputDirectory> 
+		</configuration> </execution> </executions> </plugin> -->
+	<!-- 配置将lib文件夹下的jar包也打进包中，但好像没什么用 <plugin> <groupId>org.apache.maven.plugins</groupId> 
+		<artifactId>maven-compiler-plugin</artifactId> <version>3.1</version> <configuration> 
+		<skip>true</skip> <encoding>UTF-8</encoding> <source>1.7</source> <target>1.7</target> 
+		<encoding>UTF-8</encoding> <compilerArguments> <extdirs>${project.basedir}\lib</extdirs> 
+		</compilerArguments> </configuration> </plugin> -->
+	<!-- 将lib目录下的jar包也打包除了可以在 maven-compiler-plugin中配置<compilerArguments> <extdirs>${project.basedir}\lib</extdirs></compilerArguments>外还可以用下面的方式 
+		<resources> <resource> <targetPath>lib/</targetPath> <directory>lib/</directory> 
+		<includes> <include>**/*.jar</include> </includes> </resource> </resources> -->
+
+</project>
