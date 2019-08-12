@@ -1,14 +1,8 @@
----
-title:"知识图谱使用说明"
-author:"SuperMap.ATLab"
----
 # ATLab-KnowledgeGraph
-[toc]
+
 ---
 ## 1.用前须知
-- 默认调用该jar包的用户拥有iobjects的运行权限，如果没有或不确定，需要先确保可以正常使用iobjects。
-- 将geokg-1.0.jar与geokg-1.0-jar-with-dependencies.jar一起导入到项目中，便可以使用
-- 程序源码位于jar/geokg-1.0-sources.jar
+- 默认使用该项目的用户拥有iobjects的运行权限，如果没有或不确定，需要先确保可以正常使用iobjects。
 - 目前只支持udb文件
 --- 
 ## 2.地理知识图谱介绍
@@ -21,8 +15,7 @@ author:"SuperMap.ATLab"
     - 加载知识图谱-->添加或查询
 ---
 ## 3.如何使用
-- GettingStarted项目导入eclipse可以直接使用
-- 默认包下的GettingStarted类有详细的示例代码
+- 用eclipse直接clone本项目
 
 ---
 ##4.Geokg包中主要类与方法介绍
