@@ -270,7 +270,8 @@ public class Rdf4j {
 			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return new LinkedHashModel();
+//			e.printStackTrace();
 		}
 		Model filterModel = new LinkedHashModel();
 		Repository store = new SailRepository(new MemoryStore());

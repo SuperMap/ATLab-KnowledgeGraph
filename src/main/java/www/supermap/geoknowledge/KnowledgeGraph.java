@@ -324,6 +324,7 @@ public class KnowledgeGraph{
 			CoordSysTransParameter coordSysTransParameter = new CoordSysTransParameter();
 			CoordSysTranslator.convert(dataSet,targetPrjCoordSys,targetDataSource,targetDataSetName,coordSysTransParameter,CoordSysTransMethod.MTH_GEOCENTRIC_TRANSLATION);
 			storeDataSetsIds.add(targetDataSetWholeId);
+			dataSet.close();
 			targetDataSource.close();
 		}
 		//输出存储的信息
@@ -363,7 +364,7 @@ public class KnowledgeGraph{
 		S2CellId cell = S2CellId.fromLatLng(laln).parent(this.gridLevel);
 		//使用S2缓冲分析，得到缓冲区内的所有网格
 		ArrayList<S2CellId> coverCells = S2.getCoveringCellIdsFromCell(cell, iRadius, this.gridLevel);
-		//从知识图谱中获得指定类型的id
+		//从知识图谱中获得指定类型的id,key为类型，vaule为符合key类型的cellid
 		HashMap<String, ArrayList<String>>idResults = Rdf4j.queryGeoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(), coverCells, arType);
 		//通过id从源文件中取RecordSet
 		HashMap<String, ArrayList<RecordSetEntity>> recordSetResults = Iobjects.getRecordSetFromIds(idResults,this.getOriginDataStorePath());
