@@ -303,21 +303,23 @@ public class Iobjects {
 		/**
 		 * V1.0版本的处理方式：每读一条记录就要打开和关闭一次数据源，已作废
 		 */
-//		for (Entry<String, ArrayList<String>> entry : idResults.entrySet()) {
-//			String entityType = entry.getKey();
-//			ArrayList<RecordSetEntity> recordSetEntities = new ArrayList<RecordSetEntity>();
-//			for (String recordId : entry.getValue()) {
-//				RecordSetEntity recordSetEntity = new RecordSetEntity(recordId, originDataStorePath, entityType);
-//				if (recordSetEntity.getPoint() != null) {
-//					recordSetEntities.add(recordSetEntity);
-//				}
-//			}
-//			idAndRecordSets.put(entityType, recordSetEntities);
-//		}
+		// for (Entry<String, ArrayList<String>> entry : idResults.entrySet()) {
+		// String entityType = entry.getKey();
+		// ArrayList<RecordSetEntity> recordSetEntities = new
+		// ArrayList<RecordSetEntity>();
+		// for (String recordId : entry.getValue()) {
+		// RecordSetEntity recordSetEntity = new RecordSetEntity(recordId,
+		// originDataStorePath, entityType);
+		// if (recordSetEntity.getPoint() != null) {
+		// recordSetEntities.add(recordSetEntity);
+		// }
+		// }
+		// idAndRecordSets.put(entityType, recordSetEntities);
+		// }
 
 		for (String type : idResults.keySet()) {
 			ArrayList<String> recordIds = idResults.get(type);
-			//获得当前类型存在哪个数据源、数据集
+			// 获得当前类型存在哪个数据源、数据集
 			String[] idSplits = recordIds.get(0).split("_");
 			String dataSourceId = idSplits[0];
 			String dataSetId = idSplits[1];
@@ -341,5 +343,56 @@ public class Iobjects {
 			dataSource.close();
 		}
 		return idAndRecordSets;
+	}
+
+	/**
+	 * 判断数据集是否需要已经存过了，已经存过的不需要再存
+	 * 
+	 * @param dataSet
+	 *            需要判断的数据集
+	 * @param originDataStorePath
+	 *            存储数据的文件夹
+	 * @return 没有存储过返回true，存储过不需要存的返回false
+	 */
+	public static boolean dataSetNeedStoreOrNot(Dataset dataSet, String originDataStorePath) {
+		// 找出所有的udb文件
+		File file = new File(originDataStorePath);
+		File[] fs = file.listFiles();
+		if (fs.length == 0) {
+			return true;
+		}
+		Datasource dataSource = null;
+		for (File f : fs) {
+			if (!f.getName().endsWith("udb"))
+				continue;
+			// 对所有udb文件中的dataset与当前dataset进行比较
+			Workspace workSpace = new Workspace();
+			DatasourceConnectionInfo datasourceConnectionInfo = new DatasourceConnectionInfo();
+			datasourceConnectionInfo.setServer(f.getAbsolutePath());
+			datasourceConnectionInfo.setEngineType(EngineType.UDB);
+			dataSource = workSpace.getDatasources().open(datasourceConnectionInfo);
+			Datasets dataSets = dataSource.getDatasets();
+			for (int i = 0; i < dataSets.getCount(); i++) {
+				Dataset originDataSet = dataSets.get(i);
+				// 判断两个数据集是否一样的条件为：数据集名称、数据集类型（点线面体等）以及数据表名称
+				if (dataSet.getName().equals(originDataSet.getName().split("_")[1])
+						&& dataSet.getType().equals(originDataSet.getType())) {
+					// 判断相同位置的某一个recordset的字段列数是否一致，一致则认为是同一数据集
+					DatasetVector dataSetVector = (DatasetVector) dataSet;
+					Recordset recordSet = dataSetVector.getRecordset(false, CursorType.STATIC);
+					// recordSet.moveFirst();
+					DatasetVector originDataSetVector = (DatasetVector) originDataSet;
+					Recordset originRecordSet = originDataSetVector.getRecordset(false, CursorType.STATIC);
+					// originRecordSet.moveFirst();
+					if (recordSet.getFieldCount() == originRecordSet.getFieldCount()) {
+						dataSource.close();
+						// System.out.println("Done");
+						return false;
+					}
+				}
+			}
+		}
+		dataSource.close();
+		return true;
 	}
 }

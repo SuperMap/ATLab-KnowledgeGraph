@@ -305,6 +305,11 @@ public class KnowledgeGraph{
 		//1.1 获得当前数据集要存储的数据源与数据集文件名
 		String dataSetStartId = Iobjects.getEndDataSetId(this.getOriginDataStorePath());
 		for (Dataset dataSet : dataSets) {
+			//判断该数据集是否已存储过,需要存储则返回true
+			boolean needStore = Iobjects.dataSetNeedStoreOrNot(dataSet,this.getOriginDataStorePath());
+			if(!needStore){
+				continue;
+			}
 			String currentWholeIndexId = Iobjects.getNextDataSetId(dataSetStartId,this.getOriginDataStorePath());
 			dataSetStartId = currentWholeIndexId;
 			String[] idSplits = currentWholeIndexId.split("_");
