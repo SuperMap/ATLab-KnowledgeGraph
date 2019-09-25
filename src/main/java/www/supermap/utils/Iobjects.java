@@ -2,6 +2,8 @@ package www.supermap.utils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -28,6 +30,7 @@ import www.supermap.model.iobjects.RecordSetEntity;
 import www.supermap.model.iobjects.RegionObjectEntity;
 
 public class Iobjects {
+	private static final int MAX_DATASET_NUM = 100;
 
 	public Iobjects() {
 		// TODO Auto-generated constructor stub
@@ -41,10 +44,28 @@ public class Iobjects {
 	public static String getEndDataSetId(String storeDir) {
 		// TODO Auto-generated method stub
 		// 目前只使用一个数据源，id为0
-		String defaultStore = "0.udb";
+		// 一个数据集存放100个数据集，多出的存到新数据集
+		// 1.找到数据库文件下最后一个数据源
+		File oriFile = new File(storeDir);
+		File[] files = oriFile.listFiles();
+		HashSet<Integer> idSet = new HashSet<Integer>();
+		for (File file : files) {
+			String fileWholeName = file.getName();
+			if (!fileWholeName.endsWith("udb")) {
+				continue;
+			}
+			int fileId = Integer.valueOf(fileWholeName.split("\\.")[0]);
+			idSet.add(fileId);
+		}
+		// 2.找出最大的数据源id
+		int maxId = 0;
+		if (!idSet.isEmpty()) {
+			maxId = Collections.max(idSet);
+		}
+		String currentStore = maxId + ".udb";
 		Workspace workSpace = new Workspace();
 		DatasourceConnectionInfo datasourceConnectionInfo = new DatasourceConnectionInfo();
-		datasourceConnectionInfo.setServer(storeDir + File.separator + defaultStore);
+		datasourceConnectionInfo.setServer(storeDir + File.separator + currentStore);
 		datasourceConnectionInfo.setEngineType(EngineType.UDB);
 		Datasource dataSource = null;
 		try {
@@ -56,7 +77,7 @@ public class Iobjects {
 		}
 		int id = dataSource.getDatasets().getCount() - 1;
 		dataSource.close();
-		return "0_D" + id;
+		return maxId + "_D" + id;
 	}
 
 	/**
@@ -144,9 +165,24 @@ public class Iobjects {
 	public static String getNextDataSetId(String currentSetStartId, String originDataStorePath) {
 		// TODO Auto-generated method stub
 		String[] idSplits = currentSetStartId.split("_");
+		int preDataSourceId = Integer.valueOf(idSplits[0]);
 		int preDataSetId = Integer.valueOf(idSplits[1].substring(1));
-		int currentDataSetId = preDataSetId + 1;
-		return idSplits[0] + "_D" + currentDataSetId;
+		int currentDataSourceId;
+		int currentDataSetId;
+		if (preDataSetId >= MAX_DATASET_NUM - 1) {
+			currentDataSourceId = preDataSourceId + 1;
+			currentDataSetId = 0;
+			Workspace workSpace = new Workspace();
+			DatasourceConnectionInfo datasourceConnectionInfo = new DatasourceConnectionInfo();
+			datasourceConnectionInfo.setServer(originDataStorePath + File.separator + currentDataSourceId + ".udb");
+			datasourceConnectionInfo.setEngineType(EngineType.UDB);
+			Datasource dataSource = workSpace.getDatasources().create(datasourceConnectionInfo);
+			dataSource.close();
+		} else {
+			currentDataSourceId = preDataSourceId;
+			currentDataSetId = preDataSetId + 1;
+		}
+		return currentDataSourceId + "_D" + currentDataSetId;
 	}
 
 	/**
@@ -323,6 +359,8 @@ public class Iobjects {
 			String[] idSplits = recordIds.get(0).split("_");
 			String dataSourceId = idSplits[0];
 			String dataSetId = idSplits[1];
+			// System.out.println(originDataStorePath + File.separator +
+			// dataSourceId + ".udb");
 			Workspace workSpace = new Workspace();
 			DatasourceConnectionInfo dataSourceConnectionInfo = new DatasourceConnectionInfo();
 			dataSourceConnectionInfo.setServer(originDataStorePath + File.separator + dataSourceId + ".udb");
@@ -363,12 +401,15 @@ public class Iobjects {
 		}
 		Datasource dataSource = null;
 		for (File f : fs) {
-			if (!f.getName().endsWith("udb"))
+			if (!f.getName().endsWith("udb")) {
 				continue;
+			}
+
 			// 对所有udb文件中的dataset与当前dataset进行比较
 			Workspace workSpace = new Workspace();
 			DatasourceConnectionInfo datasourceConnectionInfo = new DatasourceConnectionInfo();
 			datasourceConnectionInfo.setServer(f.getAbsolutePath());
+			// System.out.println(f.getAbsolutePath());
 			datasourceConnectionInfo.setEngineType(EngineType.UDB);
 			dataSource = workSpace.getDatasources().open(datasourceConnectionInfo);
 			Datasets dataSets = dataSource.getDatasets();
@@ -388,11 +429,13 @@ public class Iobjects {
 						dataSource.close();
 						// System.out.println("Done");
 						return false;
+					} else {
+						continue;
 					}
 				}
 			}
+			dataSource.close();
 		}
-		dataSource.close();
 		return true;
 	}
 }

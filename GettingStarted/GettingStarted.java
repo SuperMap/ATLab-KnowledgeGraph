@@ -12,7 +12,7 @@ public class GettingStarted {
 		String knowledgeGraphStoreDir = "SampleStore";
 //		KnowledgeGraph.createKnowledgeGraph(13, knowledgeGraphStoreDir);
 		// 以网格长度为参数构建知识图谱
-		// KnowledgeGraph.createKnowledgeGraph(1000.0,knowledgeGraphStoreDir);
+//		 KnowledgeGraph.createKnowledgeGraph(1000.0,knowledgeGraphStoreDir);
 
 		// 2.第一次创建之后，再次使用只需直接加载一个存在的知识图谱
 		KnowledgeGraph knowledgeGraph = KnowledgeGraph.loadKnowledgeGraph(knowledgeGraphStoreDir);
@@ -25,7 +25,7 @@ public class GettingStarted {
 		knowledgeGraph.addKnowledgeGraph(dataSource, arType);
 
 		// 4.查询知识图谱
-		// 要查询的点的纬度及纬度（WGS84）
+		// 要查询的点的纬度及纬度举例（WGS84）
 		double dLatitude = 29.6965845497988;
 		double dLongitude = 106.625768872153;
 		// 查询半径，单位：米
@@ -33,8 +33,7 @@ public class GettingStarted {
 		// 查询指定经纬度范围内图谱中的所有数据集类型
 		// String[] queryType = {};
 		String[] queryType = { "集体宿舍", "停车场", "行政办公用地" };
-		HashMap<String, ArrayList<RecordSetEntity>> result = knowledgeGraph.queryKnowledgeGraph(dLatitude, dLongitude,
-				iRadius, queryType);
+		HashMap<String, ArrayList<RecordSetEntity>> result = knowledgeGraph.queryKnowledgeGraph(dLatitude, dLongitude,iRadius, queryType);
 
 		// 5.打印搜索结果
 		// RecordSetEntity类目前有两个属性，分别为point和mingCheng,分别为实体的经纬度与名称，可以通过get()获得
