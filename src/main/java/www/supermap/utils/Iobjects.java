@@ -2,11 +2,9 @@ package www.supermap.utils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map.Entry;
 
 import com.supermap.data.CursorType;
 import com.supermap.data.Dataset;
@@ -29,12 +27,16 @@ import www.supermap.model.iobjects.PointObjectEntity;
 import www.supermap.model.iobjects.RecordSetEntity;
 import www.supermap.model.iobjects.RegionObjectEntity;
 
+/**
+ * iobjects相关
+ * 
+ * @author SunYasong
+ *
+ */
 public class Iobjects {
-	private static final int MAX_DATASET_NUM = 100;
 
-	public Iobjects() {
-		// TODO Auto-generated constructor stub
-	}
+	// 存入知识图谱的数据集要存入本地数据源中，一个udb文件可以存的最大数量
+	private static final int MAX_DATASET_NUM = 100;
 
 	/**
 	 * 通过检查当前图谱源文件下存储的数据集，得到最后一个数据集的id
@@ -258,7 +260,7 @@ public class Iobjects {
 	}
 
 	/**
-	 * 将传入的gis数填补，转换成适存储的grid
+	 * 将传入的数据填补，转换成适存储的grid
 	 * 
 	 * @param gisData
 	 * @param gridLevel
@@ -336,31 +338,12 @@ public class Iobjects {
 			HashMap<String, ArrayList<String>> idResults, String originDataStorePath) {
 		// TODO Auto-generated method stub
 		HashMap<String, ArrayList<RecordSetEntity>> idAndRecordSets = new HashMap<String, ArrayList<RecordSetEntity>>();
-		/**
-		 * V1.0版本的处理方式：每读一条记录就要打开和关闭一次数据源，已作废
-		 */
-		// for (Entry<String, ArrayList<String>> entry : idResults.entrySet()) {
-		// String entityType = entry.getKey();
-		// ArrayList<RecordSetEntity> recordSetEntities = new
-		// ArrayList<RecordSetEntity>();
-		// for (String recordId : entry.getValue()) {
-		// RecordSetEntity recordSetEntity = new RecordSetEntity(recordId,
-		// originDataStorePath, entityType);
-		// if (recordSetEntity.getPoint() != null) {
-		// recordSetEntities.add(recordSetEntity);
-		// }
-		// }
-		// idAndRecordSets.put(entityType, recordSetEntities);
-		// }
-
 		for (String type : idResults.keySet()) {
 			ArrayList<String> recordIds = idResults.get(type);
 			// 获得当前类型存在哪个数据源、数据集
 			String[] idSplits = recordIds.get(0).split("_");
 			String dataSourceId = idSplits[0];
 			String dataSetId = idSplits[1];
-			// System.out.println(originDataStorePath + File.separator +
-			// dataSourceId + ".udb");
 			Workspace workSpace = new Workspace();
 			DatasourceConnectionInfo dataSourceConnectionInfo = new DatasourceConnectionInfo();
 			dataSourceConnectionInfo.setServer(originDataStorePath + File.separator + dataSourceId + ".udb");

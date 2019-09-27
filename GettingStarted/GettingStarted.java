@@ -12,7 +12,7 @@ public class GettingStarted {
 		String knowledgeGraphStoreDir = "SampleStore";
 		KnowledgeGraph.createKnowledgeGraph(13, knowledgeGraphStoreDir);
 		// 以网格长度为参数构建知识图谱
-//		 KnowledgeGraph.createKnowledgeGraph(1000.0,knowledgeGraphStoreDir);
+		//KnowledgeGraph.createKnowledgeGraph(1000.0,knowledgeGraphStoreDir);
 
 		// 2.第一次创建之后，再次使用只需直接加载一个存在的知识图谱
 		KnowledgeGraph knowledgeGraph = KnowledgeGraph.loadKnowledgeGraph(knowledgeGraphStoreDir);

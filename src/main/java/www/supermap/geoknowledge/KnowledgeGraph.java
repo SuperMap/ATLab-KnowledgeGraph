@@ -8,7 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Properties;
 
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
@@ -29,6 +28,11 @@ import www.supermap.utils.Iobjects;
 import www.supermap.utils.Rdf4j;
 import www.supermap.utils.S2;
 
+/**
+ * 知识图谱类，包括图谱的构建、数据的添加、搜索功能
+ * @author SunYasong
+ *
+ */
 public class KnowledgeGraph {
 	// 知识图谱的配置文件
 	private static final String CONFIGFILE = "KnowledgeGraph.conf";
@@ -45,22 +49,47 @@ public class KnowledgeGraph {
 	 * 加载默认配置下的图谱，如果不存在则构建一个空的知识图谱。默认参数：网格级别为13，图谱存储目录为当前项目根目录的GeoKnowledgeStore\\
 	 */
 	public KnowledgeGraph() {
-		// TODO Auto-generated constructor stub
+		
 	}
 
+	/**
+	 * 有参的构造函数
+	 * @param gridLevel 网格层级
+	 * @param storeDir  存储路径
+	 */
 	private KnowledgeGraph(int gridLevel, String storeDir) {
 		// TODO Auto-generated constructor stub
 		this.gridLevel = gridLevel;
 		this.storeDir = storeDir;
 	}
 
+	public String getStoreDir() {
+		File file = new File(storeDir);
+		return file.getAbsolutePath();
+	}
+	
+	public int getGridLevel() {
+		return gridLevel;
+	}
+	
+	private String getKnowledgeGraphStorePath() {
+		return this.storeDir + File.separator + KNOWLEDGE_STORE_DIR;
+	}
+	
+	private String getOriginDataStorePath() {
+		return this.storeDir + File.separator + ORIGIN_DATA_DIR;
+	}
+	
+	private String getConfigFilePath() {
+		return this.storeDir + File.separator + CONFIGFILE;
+	}
+	
 	/**
 	 * 根据网格等级和图谱存储目录的路径来构建一个知识图谱
 	 * 
-	 * @param iGridLevel
-	 *            网格等级
-	 * @param strDataStore
-	 * @return
+	 * @param iGridLevel 网格等级
+	 * @param strDataStore 图谱存储路径
+	 * @return 创建成功返回True，否则返回fasle
 	 */
 	public static boolean createKnowledgeGraph(int iGridLevel, String strDataStore) {
 		// KnowledgeGraph know = new KnowledgeGraph(iGridLevel,strDataStore);
@@ -69,45 +98,115 @@ public class KnowledgeGraph {
 	}
 
 	/**
-	 * 根据网格长度和图谱存储目录的路径来构建一个新的知识图谱
+	 * 根据网格边长和图谱存储目录的路径来构建一个新的知识图谱
 	 * 
-	 * @param iGridLength
-	 * @param strDataStore
-	 * @return
+	 * @param iGridLength 网格边长
+	 * @param strDataStore 图谱存储路径
+	 * @return 构建成功则返回True，否则返回False
 	 */
 	public static boolean createKnowledgeGraph(double iGridLength, String strDataStore) {
 		int gridLength = S2.getCellLevelFromLength(iGridLength);
 		return createKnowledgeGraph(gridLength, strDataStore);
 	}
 
-	public String getStoreDir() {
-		File file = new File(storeDir);
-		return file.getAbsolutePath();
+
+
+	/**
+	 * 按照图谱存储路径加载一个已经存在的知识图谱
+	 * @param strDataStore 图谱存储路径
+	 * @return KnowledgeGraph类
+	 */
+	public static KnowledgeGraph loadKnowledgeGraph(String strDataStore) {
+		// 检查目录合法性
+		KnowledgeGraph know = null;
+		boolean checkedDir = Common.checkDir(strDataStore);
+		if (!checkedDir) {
+			System.out.println("载入知识图谱路径错误，请指定正确的路径名");
+			System.exit(1);
+		}
+		// 将对象路径改为完整路径
+		String fullStrDataStore = new File(strDataStore).getAbsolutePath();
+		HashMap<String, String> confInfo = getConfInfo(fullStrDataStore);
+		// System.out.println(fullStrDataStore);
+		if (confInfo.isEmpty()) {
+			System.out.println("图谱配置信息载入失败，请重新指定图谱路径或删除当前图谱");
+			System.exit(1);
+		}
+		// 一.目录下有配置文件，
+		else {
+			int gridLevel = Integer.valueOf(confInfo.get("gridLevel"));
+			String storeDir = confInfo.get("storeDir");
+			know = new KnowledgeGraph(gridLevel, storeDir);
+		}
+		System.out.println("成功加载知识图谱");
+		return know;
 	}
 
-	public int getGridLevel() {
-		return gridLevel;
+	/**
+	 * 从指定数据源读取指定地理实体，存入构建好的知识图谱中
+	 * 
+	 * @param dataSource 数据源路径，目前支持UDB所在目录
+	 * @param arType 数据源中想要添加到知识图谱中的地理实体类型
+	 * @return 添加成功返回True，否则返回False
+	 */
+	public boolean addKnowledgeGraph(String dataSource, String[] arType) {
+		// 将指定数据集存入知识图谱数据源
+		ArrayList<String> storeDataSetsIds = this.storeDataSource(dataSource, arType);
+		// 得到数据源中符合指定类型的所有数据集
+		// ArrayList<GeoEntity> gisData =
+		// ProcessData.getGisDataFromDataSource(dataSource,geoTypes);
+		// ArrayList<Grid> gridModels =
+		// ProcessData.getKnowledgeGraphModel(gisData,this.gridLevel);
+		// Boolean bo = Rdf4j.writeToKnowledgeGraph(gridModels, this.storeDir);
+		for (String dataSetId : storeDataSetsIds) {
+			ArrayList<www.supermap.model.iobjects.GeoObjectEntity> gisData = Iobjects
+					.getGisDataFromDataSet(this.getOriginDataStorePath(), dataSetId);
+			// 生成可以存入知识图谱的数据模型-Grid
+			ArrayList<ObjectGrid> gridModels = Iobjects.getKnowledgeGraphModelFromObjects(gisData, this.gridLevel);
+			// 将数据增量存入知识图谱
+			Boolean bo = Rdf4j.writeToKnowledgeGraphFromObject(gridModels, this.getKnowledgeGraphStorePath());
+			System.out.println(dataSetId.split("_")[2] + " 已存储到知识图谱");
+		}
+		System.out.println("增量更新完毕");
+		return true;
 	}
 
-	private String getKnowledgeGraphStorePath() {
-		return this.storeDir + File.separator + KNOWLEDGE_STORE_DIR;
-	}
-
-	private String getOriginDataStorePath() {
-		return this.storeDir + File.separator + ORIGIN_DATA_DIR;
-	}
-
-	private String getConfigFilePath() {
-		return this.storeDir + File.separator + CONFIGFILE;
+	/**
+	 * 通过指定经纬度和半径构建缓冲区，从当前图谱中查询出符合候选类型的信息
+	 * 
+	 * @param dLatitude
+	 *            纬度
+	 * @param dLongitude
+	 *            经度
+	 * @param iRadius
+	 *            缓冲区半径
+	 * @param arType
+	 *            地理实体类型
+	 * @return RecordSet
+	 */
+	public HashMap<String, ArrayList<RecordSetEntity>> queryKnowledgeGraph(double dLatitude, double dLongitude,
+			double iRadius, String[] arType) {
+		// 判断经纬度位于哪个网格
+		S2LatLng laln = S2LatLng.fromDegrees(dLatitude, dLongitude);
+		S2CellId cell = S2CellId.fromLatLng(laln).parent(this.gridLevel);
+		// 使用S2缓冲分析，得到缓冲区内的所有网格
+		ArrayList<S2CellId> coverCells = S2.getCoveringCellIdsFromCell(cell, iRadius, this.gridLevel);
+		// 从知识图谱中获得指定类型的id,key为类型，vaule为符合key类型的cellid
+		HashMap<String, ArrayList<String>> idResults = Rdf4j
+				.queryGeoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(), coverCells, arType);
+		// 通过id从源文件中取RecordSet
+		HashMap<String, ArrayList<RecordSetEntity>> recordSetResults = Iobjects.getRecordSetFromIds(idResults,
+				this.getOriginDataStorePath());
+		// HashMap<String, ArrayList<RecordSetEntity>> searchResults =
+		// Rdf4j.queryGeoInfoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(),this.getOriginDataStorePath(),coverCells,geoTypes);
+		return recordSetResults;
 	}
 
 	/**
 	 * 图谱初始化，加载目录下的配置文件，没有的话直接构建
 	 * 
-	 * @param storeDir
-	 *            存储路径
-	 * @param gridLevel
-	 *            网格级别
+	 * @param storeDir 存储路径
+	 * @param gridLevel 网格级别
 	 */
 	private static void graphInit(String storeDir, int gridLevel) {
 		// 检查目录合法性
@@ -125,46 +224,16 @@ public class KnowledgeGraph {
 		else {
 			System.out.println("指定路径下已有知识图谱，请重新指定存储路径或删除当前图谱");
 			System.exit(1);
-			/*
-			 * //一.1 和输入的网格级别参数一致，直接加载 if(isConfInfoMatch(confInfo)) {
-			 * //可以加上图谱的信息 System.out.println("初始化成功，已成功加载图谱"); } //一.2
-			 * 和输入的网格级别参数不一致，报错，让开发者处理 else { try {
-			 * System.out.println("图谱初始化失败，实例化参数与存在的知识图谱参数不符");
-			 * System.out.println(
-			 * "解决办法：1.删掉已存在的知识图谱存储的文件夹。2.改变gridLevel参数，使其与存在的知识图谱保持一致。"); throw
-			 * new Exception(); } catch (Exception e) { // TODO Auto-generated
-			 * catch block e.printStackTrace(); System.exit(1); } }
-			 */
-
 		}
 
 	}
-
+	
 	/**
-	 * 判断存储路径下的谱图谱参数与实例化时设定的参数是否一致（没加内容-2019年7月20日11:14:50）
-	 * 
-	 * @param confInfo
-	 * @return
-	 */
-	private boolean isConfInfoMatch(HashMap<String, String> confInfo) {
-		// TODO Auto-generated method stub
-		boolean isLevel = confInfo.get("gridLevel").equals("" + this.gridLevel);
-		boolean isDir = confInfo.get("storeDir").equals(this.storeDir);
-		if (isDir && isLevel) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * 获取图谱存储路径下的配置文件，没有则返回空HashMap
-	 * 
-	 * @param storeDir
-	 * @return
+	 * 获取图谱存储路径下的配置文件，
+	 * @param storeDir 图谱存储路径
+	 * @return 没有则返回空HashMap
 	 */
 	private static HashMap<String, String> getConfInfo(String storeDir) {
-		// TODO Auto-generated method stub
 		String filePath = storeDir + File.separator + CONFIGFILE;
 		// System.out.println(filePath);
 		File file = new File(filePath);
@@ -239,72 +308,14 @@ public class KnowledgeGraph {
 		return true;
 	}
 
-	public static KnowledgeGraph loadKnowledgeGraph(String strDataStore) {
-		// 检查目录合法性
-		KnowledgeGraph know = null;
-		boolean checkedDir = Common.checkDir(strDataStore);
-		if (!checkedDir) {
-			System.out.println("载入知识图谱路径错误，请指定正确的路径名");
-			System.exit(1);
-		}
-		// 将对象路径改为完整路径
-		String fullStrDataStore = new File(strDataStore).getAbsolutePath();
-		HashMap<String, String> confInfo = getConfInfo(fullStrDataStore);
-		// System.out.println(fullStrDataStore);
-		if (confInfo.isEmpty()) {
-			System.out.println("图谱配置信息载入失败，请重新指定图谱路径或删除当前图谱");
-			System.exit(1);
-		}
-		// 一.目录下有配置文件，
-		else {
-			int gridLevel = Integer.valueOf(confInfo.get("gridLevel"));
-			String storeDir = confInfo.get("storeDir");
-			know = new KnowledgeGraph(gridLevel, storeDir);
-		}
-		System.out.println("成功加载知识图谱");
-		return know;
-	}
-
 	/**
-	 * 从指定数据源读取指定地理实体，存入构建好的知识图谱中
+	 * 将要添加到知识图谱中的数据集添加到知识图谱数据源,并返回添加进的数据集id。只支持udb
 	 * 
-	 * @param dataSource
-	 *            数据源路径，目前支持UDB所在目录
-	 * @param arType
-	 *            数据源中想要添加到知识图谱中的地理实体类型
-	 * @return 添加成功返回True，否则返回False
-	 */
-	public boolean addKnowledgeGraph(String dataSource, String[] arType) {
-		// 将指定数据集存入知识图谱数据源
-		ArrayList<String> storeDataSetsIds = this.storeDataSource(dataSource, arType);
-		// 得到数据源中符合指定类型的所有数据集
-		// ArrayList<GeoEntity> gisData =
-		// ProcessData.getGisDataFromDataSource(dataSource,geoTypes);
-		// ArrayList<Grid> gridModels =
-		// ProcessData.getKnowledgeGraphModel(gisData,this.gridLevel);
-		// Boolean bo = Rdf4j.writeToKnowledgeGraph(gridModels, this.storeDir);
-		for (String dataSetId : storeDataSetsIds) {
-			ArrayList<www.supermap.model.iobjects.GeoObjectEntity> gisData = Iobjects
-					.getGisDataFromDataSet(this.getOriginDataStorePath(), dataSetId);
-			// 生成可以存入知识图谱的数据模型-Grid
-			ArrayList<ObjectGrid> gridModels = Iobjects.getKnowledgeGraphModelFromObjects(gisData, this.gridLevel);
-			// 将数据增量存入知识图谱
-			Boolean bo = Rdf4j.writeToKnowledgeGraphFromObject(gridModels, this.getKnowledgeGraphStorePath());
-			System.out.println(dataSetId.split("_")[2] + " 已存储到知识图谱");
-		}
-		System.out.println("增量更新完毕");
-		return true;
-	}
-
-	/**
-	 * 将要添加到知识图谱中的数据集添加到知识图谱数据源,并返回添加进的数据集id。首先支持udb与shp文件
-	 * 
-	 * @param dataSource
-	 * @param geoTypes
-	 * @return ArrayList<String>
+	 * @param dataSource 数据源
+	 * @param geoTypes 类型
+	 * @return ArrayList<String> 存储完成的数据集
 	 */
 	private ArrayList<String> storeDataSource(String dataSource, String[] geoTypes) {
-		// TODO Auto-generated method stub
 		ArrayList<String> storeDataSetsIds = new ArrayList<String>();
 		// 获得符合条件的数据集
 		ArrayList<Dataset> allDataSets = Iobjects.getAllDataSets(dataSource);
@@ -356,58 +367,4 @@ public class KnowledgeGraph {
 		return storeDataSetsIds;
 	}
 
-	/**
-	 * 添加数据源中的所有信息到知识图谱
-	 * 
-	 * @param dataSource
-	 * @return
-	 */
-	private boolean add(String dataSource) {
-		String[] geoTypes = null;
-		Boolean bo = addKnowledgeGraph(dataSource, geoTypes);
-		return bo;
-	}
-
-	/**
-	 * 通过指定经纬度和半径构建缓冲区，从当前图谱中查询出符合候选类型的信息
-	 * 
-	 * @param dLatitude
-	 *            纬度
-	 * @param dLongitude
-	 *            经度
-	 * @param iRadius
-	 *            缓冲区半径
-	 * @param arType
-	 *            地理实体类型
-	 * @return RecordSet
-	 */
-	public HashMap<String, ArrayList<RecordSetEntity>> queryKnowledgeGraph(double dLatitude, double dLongitude,
-			double iRadius, String[] arType) {
-		// 判断经纬度位于哪个网格
-		S2LatLng laln = S2LatLng.fromDegrees(dLatitude, dLongitude);
-		S2CellId cell = S2CellId.fromLatLng(laln).parent(this.gridLevel);
-		// 使用S2缓冲分析，得到缓冲区内的所有网格
-		ArrayList<S2CellId> coverCells = S2.getCoveringCellIdsFromCell(cell, iRadius, this.gridLevel);
-		// 从知识图谱中获得指定类型的id,key为类型，vaule为符合key类型的cellid
-		HashMap<String, ArrayList<String>> idResults = Rdf4j
-				.queryGeoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(), coverCells, arType);
-		// 通过id从源文件中取RecordSet
-		HashMap<String, ArrayList<RecordSetEntity>> recordSetResults = Iobjects.getRecordSetFromIds(idResults,
-				this.getOriginDataStorePath());
-		// HashMap<String, ArrayList<RecordSetEntity>> searchResults =
-		// Rdf4j.queryGeoInfoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(),this.getOriginDataStorePath(),coverCells,geoTypes);
-		return recordSetResults;
-	}
-
-	/**
-	 * 通过指定经纬度和半径构建缓冲区，从当前图谱中查询出所有类型的信息
-	 * 
-	 * @param dLatitude
-	 * @param dLongitude
-	 * @param iRadius
-	 * @return
-	 */
-	private HashMap<String, ArrayList<RecordSetEntity>> search(double dLatitude, double dLongitude, double iRadius) {
-		return queryKnowledgeGraph(dLatitude, dLongitude, iRadius, null);
-	}
 }

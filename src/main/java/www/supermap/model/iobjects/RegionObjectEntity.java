@@ -1,7 +1,11 @@
 package www.supermap.model.iobjects;
 
 import com.supermap.data.GeoRegion;
-
+/**
+ * 面实体
+ * @author SunYasong
+ *
+ */
 public class RegionObjectEntity  extends GeoObjectEntity{
 
 	private GeoRegion region;

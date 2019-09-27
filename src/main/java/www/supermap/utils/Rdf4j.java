@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 
@@ -39,13 +38,16 @@ import www.supermap.model.iobjects.ObjectGrid;
 import www.supermap.model.iobjects.PointObjectEntity;
 import www.supermap.model.iobjects.RecordSetEntity;
 import www.supermap.model.iobjects.RegionObjectEntity;
-
+/**
+ * RDF4J相关
+ * @author SunYasong
+ *
+ */
 public class Rdf4j {
 	/**
 	 * 得到一个初始化后的可以放再本地的内存仓库
 	 * 
-	 * @param storeDir
-	 *            仓库存储的目录 例如：C:\\Users\\Administrator\\Desktop\\memoryDB\\
+	 * @param storeDir 仓库存储的目录 
 	 * @return
 	 */
 	public static Repository getNavmoryStore(String storeDir) {
@@ -71,6 +73,14 @@ public class Rdf4j {
 		return store;
 	}
 
+	/**
+	 * 通过指定三元组从指定仓库中查询符合条件的语句
+	 * @param db
+	 * @param subject
+	 * @param predicate
+	 * @param bing
+	 * @return
+	 */
 	public static RepositoryResult<Statement> queryByStatement(Repository db, IRI subject, IRI predicate, IRI bing) {
 		RepositoryResult<Statement> statements = null;
 		try (RepositoryConnection conn = db.getConnection()) {

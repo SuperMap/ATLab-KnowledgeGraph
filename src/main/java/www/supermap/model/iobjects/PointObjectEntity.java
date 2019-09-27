@@ -1,10 +1,11 @@
 package www.supermap.model.iobjects;
 
 import com.supermap.data.GeoPoint;
-import com.vividsolutions.jts.geom.Point;
-
-import www.supermap.utils.S2;
-
+/**
+ * 点实体
+ * @author SunYasong
+ *
+ */
 public class PointObjectEntity extends GeoObjectEntity{
 	private GeoPoint point;
 	public PointObjectEntity(GeoPoint point,String entityType,String entityId) {
