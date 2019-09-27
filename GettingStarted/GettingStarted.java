@@ -10,7 +10,7 @@ public class GettingStarted {
 	public static void main(String[] args) {
 		// 1.以网格等级和图谱存储路径为参数，创建知识图谱
 		String knowledgeGraphStoreDir = "SampleStore";
-//		KnowledgeGraph.createKnowledgeGraph(13, knowledgeGraphStoreDir);
+		KnowledgeGraph.createKnowledgeGraph(13, knowledgeGraphStoreDir);
 		// 以网格长度为参数构建知识图谱
 //		 KnowledgeGraph.createKnowledgeGraph(1000.0,knowledgeGraphStoreDir);
 

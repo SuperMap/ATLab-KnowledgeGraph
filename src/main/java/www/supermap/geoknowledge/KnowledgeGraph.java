@@ -312,7 +312,7 @@ public class KnowledgeGraph {
 		// 1.将数据集存储到图谱源文件
 		// 1.1 获得当前数据集要存储的数据源与数据集文件名
 		String dataSetStartId = Iobjects.getEndDataSetId(this.getOriginDataStorePath());
-//		System.out.println(dataSetStartId);
+		// System.out.println(dataSetStartId);
 		for (Dataset dataSet : dataSets) {
 			// 判断该数据集是否已存储过,需要存储则返回true
 			boolean needStore = Iobjects.dataSetNeedStoreOrNot(dataSet, this.getOriginDataStorePath());
@@ -328,7 +328,8 @@ public class KnowledgeGraph {
 			String currentDataSetName = dataSet.getName();
 			String targetDataSetName = currentDataSetIndexId + "_" + currentDataSetName;
 			String targetDataSetWholeId = currentDataSourceIndexId + "_" + targetDataSetName;
-			String dataSourceServer = this.getOriginDataStorePath() + File.separator + currentDataSourceIndexId+ ".udb";
+			String dataSourceServer = this.getOriginDataStorePath() + File.separator + currentDataSourceIndexId
+					+ ".udb";
 			// System.out.println(dataSourceServer);
 			// 1.2 转换坐标系，将数据集存储到指定数据源
 			DatasourceConnectionInfo dscio = new DatasourceConnectionInfo();
@@ -342,7 +343,7 @@ public class KnowledgeGraph {
 			storeDataSetsIds.add(targetDataSetWholeId);
 			dataSet.close();
 			targetDataSource.close();
-//			System.out.println(targetDataSource.isOpened());
+			// System.out.println(targetDataSource.isOpened());
 		}
 		// 输出存储的信息
 		int geoTypesNmuber = 0;
