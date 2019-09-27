@@ -31,7 +31,6 @@ public class RecordSetEntity {
 	private String mingCheng;
 
 	public RecordSetEntity(String recordId, String dataDtoreDir, String entityType) {
-		// TODO Auto-generated constructor stub
 		this.recordId = recordId;
 		this.dataDtoreDir = dataDtoreDir;
 		this.entityType = entityType;
