@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.supermap</groupId>
 	<artifactId>geokg</artifactId> <!-- 包名 -->
-	<version>1.0</version>    <!-- 打包的版本 -->
+	<version>2.0</version>    <!-- 打包的版本 -->
 	<packaging>jar</packaging> <!-- 打包方式，还有war等 -->
 
 	<properties>
