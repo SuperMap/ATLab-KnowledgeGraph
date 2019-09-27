@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.supermap</groupId>
 	<artifactId>geokg</artifactId> <!-- 包名 -->
-	<version>1.0</version>    <!-- 打包的版本 -->
+	<version>2.0</version>    <!-- 打包的版本 -->
 	<packaging>jar</packaging> <!-- 打包方式，还有war等 -->
 
 	<properties>
@@ -33,16 +33,49 @@
 			<artifactId>s2-geometry-library-java</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-runtime -->
-		<dependency>
-			<groupId>org.eclipse.rdf4j</groupId>
-			<artifactId>rdf4j-runtime</artifactId>
-			<version>2.5.2</version>
-		</dependency>
 		<dependency>
 			<groupId>com.supermap</groupId>
 			<artifactId>data</artifactId>
 			<version>9.1.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-runtime 
+			<dependency> <groupId>org.eclipse.rdf4j</groupId> <artifactId>rdf4j-runtime</artifactId> 
+			<version>2.5.2</version> </dependency> -->
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-model</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-rio-api -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-rio-api</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-repository-api -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-repository-api</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-repository-sail -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-repository-sail</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-sail-memory -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-sail-memory</artifactId>
+			<version>2.5.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-sail-nativerdf -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-sail-nativerdf</artifactId>
+			<version>2.5.2</version>
 		</dependency>
 	</dependencies>
 

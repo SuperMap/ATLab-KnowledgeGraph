@@ -1,7 +1,11 @@
 package www.supermap.model.iobjects;
 
 import com.supermap.data.GeoLine;
-
+/**
+ * 线实体
+ * @author SunYasong
+ *
+ */
 public class LineObjectEntity extends GeoObjectEntity{
 
 	private GeoLine line;

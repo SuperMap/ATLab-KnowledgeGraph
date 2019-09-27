@@ -1,7 +1,11 @@
 package www.supermap.model.iobjects;
 
 import java.util.ArrayList;
-
+/**
+ * 网格实体，组合了地理实体
+ * @author SunYasong
+ *
+ */
 public class ObjectGrid {
 	//网格的id
 	private Long id;

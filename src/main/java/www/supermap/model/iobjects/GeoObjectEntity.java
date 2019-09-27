@@ -1,7 +1,11 @@
 package www.supermap.model.iobjects;
 
 import java.util.ArrayList;
-
+/**
+ * 抽象地理实体类，包含了一些点线面的共同点
+ * @author SunYasong
+ *
+ */
 public abstract class GeoObjectEntity {
 	protected int cellLevel;
 	protected String entityType;
