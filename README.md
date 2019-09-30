@@ -1,9 +1,11 @@
 ![company](/image/company.png) 
 # 基于地理格网的时空知识图谱
 ## 简介
-ATLab-KnowledgeGraph 是北京超图软件股份有限公司未来GIS实验室发布的开源项目,在iobjects产品的基础上，将地理信息实体划分到多个网格，使用网格与各实体之间的位置关系来构建地理知识图谱。
+ATLab-KnowledgeGraph 是北京超图软件股份有限公司未来GIS实验室发布的开源项目,在iobjects产品的基础上，将地理信息实体按照时间和位置划分到多个网格，使用网格、时间及各实体之间的位置关系来构建地理知识图谱。
 使用本项目API，用户可以使用若干数据集来构建自己的地理格网知识图谱，从而快速查询出指定地点缓冲区内的兴趣点。
 本项目在知识图谱的表示上使用了RDF，存储使用RDF4J数据库
+图谱示意图：
+![shiyitu](/image/shiyi.png)
 最终效果展示：
 ![xiaoguo](/image/result.png)
 
@@ -53,6 +55,8 @@ ATLab-KnowledgeGraph 是北京超图软件股份有限公司未来GIS实验室�
       //@param iRadius 搜索半径，单位：米
       //@param arType 感兴趣的类型，具体名称也为udb数据源显示的数据集名称
       public HashMap<String, ArrayList<RecordSetEntity>> queryKnowledgeGraph(double dLatitude, double dLongitude, double iRadius,String[] arType){}
+      //@param time 地理实体的时间
+      public HashMap<String, ArrayList<RecordSetEntity>> queryKnowledgeGraph(double dLatitude, double dLongitude, double iRadius,String[] arType，String time){}
       ```   
     - 查询返回对象 HashMap<String, ArrayList<RecordSetEntity>> 介绍
       - HashMap的key为您输入的类型，vaule为该类型的实体

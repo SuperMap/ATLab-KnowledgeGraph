@@ -29,7 +29,8 @@ public class RecordSetEntity {
 	private Point2D point;
 	//记录集中的一个字段，名称
 	private String mingCheng;
-
+	//时间
+	private String shiJian;
 	public RecordSetEntity(String recordId, String dataDtoreDir, String entityType) {
 		this.recordId = recordId;
 		this.dataDtoreDir = dataDtoreDir;
@@ -94,6 +95,7 @@ public class RecordSetEntity {
 		// 取出实体位于的经纬度
 		Geometry geometry = recordSet.getGeometry();
 		this.point = geometry.getInnerPoint();
+		this.shiJian = recordSet.getFieldValue("sj").toString();
 		// 获取位置信息
 		// 不是所有的实体都有名称字段，因此首先检查名称字段，没有的话检查位置，再检查区县，再没有就直接用null代替
 		try {

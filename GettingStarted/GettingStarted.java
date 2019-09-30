@@ -31,9 +31,11 @@ public class GettingStarted {
 		// 查询半径，单位：米
 		double iRadius = 977.45;
 		// 查询指定经纬度范围内图谱中的所有数据集类型
-		// String[] queryType = {};
 		String[] queryType = { "集体宿舍", "停车场", "行政办公用地" };
+		// 4.1 不带时间参数的查询
 		HashMap<String, ArrayList<RecordSetEntity>> result = knowledgeGraph.queryKnowledgeGraph(dLatitude, dLongitude,iRadius, queryType);
+		// 4.2 带时间参数的查询
+//		HashMap<String, ArrayList<RecordSetEntity>> timeResult = knowledgeGraph.queryKnowledgeGraph(dLatitude, dLongitude,iRadius, queryType,"2016");
 
 		// 5.打印搜索结果
 		// RecordSetEntity类目前有两个属性，分别为point和mingCheng,分别为实体的经纬度与名称，可以通过get()获得

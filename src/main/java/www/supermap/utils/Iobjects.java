@@ -235,6 +235,7 @@ public class Iobjects {
 				GeoPoint point = (GeoPoint) recordSet.getGeometry();
 				String entityId = recordPrefix + recordSet.getID();
 				PointObjectEntity pointEntity = new PointObjectEntity(point, entityType, entityId);
+				pointEntity.setTime(recordSet.getFieldValue("sj").toString());
 				geoEntities.add(pointEntity);
 				recordSet.moveNext();
 			}
@@ -243,6 +244,7 @@ public class Iobjects {
 				GeoLine line = (GeoLine) recordSet.getGeometry();
 				String entityId = recordPrefix + recordSet.getID();
 				LineObjectEntity lineEntity = new LineObjectEntity(line, entityType, entityId);
+				lineEntity.setTime(recordSet.getFieldValue("sj").toString());
 				geoEntities.add(lineEntity);
 				recordSet.moveNext();
 			}
@@ -251,6 +253,7 @@ public class Iobjects {
 				GeoRegion region = (GeoRegion) recordSet.getGeometry();
 				String entityId = recordPrefix + recordSet.getID();
 				RegionObjectEntity regionEntity = new RegionObjectEntity(region, entityType, entityId);
+				regionEntity.setTime(recordSet.getFieldValue("sj").toString());
 				geoEntities.add(regionEntity);
 				recordSet.moveNext();
 			}
@@ -291,7 +294,7 @@ public class Iobjects {
 				regionEntity.setCellIds(cellIds);
 			}
 		}
-		// 完善实体信息后生成用于存储的网格实体
+		//完善实体信息后生成用于存储的网格实体
 		ArrayList<ObjectGrid> grids = getGridModelFromObjects(gisData);
 		return grids;
 	}
@@ -408,7 +411,18 @@ public class Iobjects {
 					DatasetVector originDataSetVector = (DatasetVector) originDataSet;
 					Recordset originRecordSet = originDataSetVector.getRecordset(false, CursorType.STATIC);
 					// originRecordSet.moveFirst();
-					if (recordSet.getFieldCount() == originRecordSet.getFieldCount()) {
+					//检测要存储的数据集有没有时间属性，没有则不存储
+					try {
+						recordSet.getFieldValue("sj");
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.out.println("=========================================");
+						System.out.println(dataSet.getName() + "没有时间属性，无法存储");
+						System.out.println("=========================================");
+						return false;
+					}
+					if (recordSet.getFieldCount() == originRecordSet.getFieldCount()
+							&& recordSet.getFieldValue("sj").equals(originRecordSet.getFieldValue("sj"))) {
 						dataSource.close();
 						// System.out.println("Done");
 						return false;

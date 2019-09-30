@@ -202,6 +202,33 @@ public class KnowledgeGraph {
 		return recordSetResults;
 	}
 
+	
+	/**
+	 * 通过指定经纬度和半径构建缓冲区，从当前图谱中查询出符合候选类型的信息
+	 * @param dLatitude 纬度
+	 * @param dLongitude 经度
+	 * @param iRadius 缓冲区半径
+	 * @param arType 实体类型
+	 * @param time 实体的时间
+	 * @return
+	 */
+	public HashMap<String, ArrayList<RecordSetEntity>> queryKnowledgeGraph(double dLatitude, double dLongitude,
+			double iRadius, String[] arType , String time) {
+		// 判断经纬度位于哪个网格
+		S2LatLng laln = S2LatLng.fromDegrees(dLatitude, dLongitude);
+		S2CellId cell = S2CellId.fromLatLng(laln).parent(this.gridLevel);
+		// 使用S2缓冲分析，得到缓冲区内的所有网格
+		ArrayList<S2CellId> coverCells = S2.getCoveringCellIdsFromCell(cell, iRadius, this.gridLevel);
+		// 从知识图谱中获得指定类型的id,key为类型，vaule为符合key类型的cellid
+		HashMap<String, ArrayList<String>> idResults = Rdf4j.queryGeoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(), coverCells, arType, time);
+		// 通过id从源文件中取RecordSet
+		HashMap<String, ArrayList<RecordSetEntity>> recordSetResults = Iobjects.getRecordSetFromIds(idResults,
+				this.getOriginDataStorePath());
+		// HashMap<String, ArrayList<RecordSetEntity>> searchResults =
+		// Rdf4j.queryGeoInfoFromMultiCellsAndGeoTypes(this.getKnowledgeGraphStorePath(),this.getOriginDataStorePath(),coverCells,geoTypes);
+		return recordSetResults;
+	}
+	
 	/**
 	 * 图谱初始化，加载目录下的配置文件，没有的话直接构建
 	 * 

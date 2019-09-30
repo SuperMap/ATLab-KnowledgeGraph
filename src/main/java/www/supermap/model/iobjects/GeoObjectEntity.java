@@ -11,6 +11,7 @@ public abstract class GeoObjectEntity {
 	protected String entityType;
 	protected String entityId;
 	protected ArrayList<Long> cellIds;
+	protected String time;
 	protected GeoObjectEntity() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -38,6 +39,13 @@ public abstract class GeoObjectEntity {
 	}
 	public void setCellIds(ArrayList<Long> cellIds) {
 		this.cellIds = cellIds;
+	}
+	
+	public String getTime() {
+		return time;
+	}
+	public void setTime(String time) {
+		this.time = time;
 	}
 	@Override
 	public int hashCode() {
