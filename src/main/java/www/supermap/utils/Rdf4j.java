@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.rdf4j.model.IRI;
@@ -331,12 +332,14 @@ public class Rdf4j {
 		IRI ontologyCell = f.createIRI(ontologyPrefix + "/Cell");
 		IRI ontologyTime = f.createIRI(ontologyPrefix + "/Time");
 		IRI ontologyHave = f.createIRI(ontologyPrefix + "/have");
+		IRI ontologyInclude = f.createIRI(ontologyPrefix + "/include");
+		IRI ontologyContain = f.createIRI(ontologyPrefix + "/contain");
 		// IRI ontologyInclude = f.createIRI(ontologyPrefix + "/include");
 		for (ObjectGrid grid : gridModels) {
 			Model model = new LinkedHashModel();
 			// 实体写入model
 			Long cellId = grid.getId();
-			
+
 			for (GeoObjectEntity geoEntity : grid.getGeoEntitys()) {
 				String timeId = null;
 				String entityType = null;
@@ -346,17 +349,17 @@ public class Rdf4j {
 					PointObjectEntity pointEntity = (PointObjectEntity) geoEntity;
 					entityType = pointEntity.getEntityType();
 					entityId = pointEntity.getEntityId();
-					timeId= pointEntity.getTime();
+					timeId = pointEntity.getTime();
 				} else if (geoEntity instanceof LineObjectEntity) {
 					LineObjectEntity lineEntity = (LineObjectEntity) geoEntity;
 					entityType = lineEntity.getEntityType();
 					entityId = lineEntity.getEntityId();
-					timeId= lineEntity.getTime();
+					timeId = lineEntity.getTime();
 				} else if (geoEntity instanceof RegionObjectEntity) {
 					RegionObjectEntity RegionObjectEntity = (RegionObjectEntity) geoEntity;
 					entityType = RegionObjectEntity.getEntityType();
 					entityId = RegionObjectEntity.getEntityId();
-					timeId= RegionObjectEntity.getTime();
+					timeId = RegionObjectEntity.getTime();
 				}
 				IRI cellIID = f.createIRI(cellsPrefix + cellId);
 				IRI timeIID = f.createIRI(timePrefix + timeId);
@@ -364,9 +367,10 @@ public class Rdf4j {
 				IRI typeEntity = f.createIRI(ontologyPrefix + "/" + entityType);
 				model.add(cellIID, RDF.TYPE, ontologyCell);
 				model.add(timeIID, RDF.TYPE, ontologyTime);
-				model.add(cellIID, ontologyTime, timeIID);
+				model.add(cellIID, ontologyInclude, timeIID);
 				model.add(timeIID, ontologyHave, typeEntity);
 				model.add(entityIdIRI, RDF.TYPE, typeEntity);
+				model.add(timeIID, ontologyContain, entityIdIRI);
 				// model.add(typeEntity,ontologyInclude,entityIdIRI);
 				// entityType = entityType.substring(0, 1).toUpperCase() +
 				// entityType.substring(1);
@@ -413,5 +417,126 @@ public class Rdf4j {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * 通过传入的多个cell和类型查询知识图谱，并返回结果
+	 * 
+	 * @param storeDir
+	 *            知识图谱路径
+	 * @param coverCells
+	 *            缓冲区内的所有cell
+	 * @param geoTypes
+	 *            要查询的实体类型
+	 * @param time
+	 *            时间
+	 * @return
+	 */
+	public static HashMap<String, ArrayList<String>> queryGeoFromMultiCellsAndGeoTypes(String storeDir,
+			ArrayList<S2CellId> coverCells, String[] geoTypes, String time) {
+		// 判断指定类型还是全部类型
+		// 全部类型
+		Model model = new LinkedHashModel();
+		if (geoTypes == null || geoTypes.length == 0) {
+			Model preModel = getRDF4jModelFromAllCellAndGeoTypes(storeDir, coverCells, time);
+			model.addAll(preModel);
+		}
+		// 指定类型
+		else {
+			// 从图谱中查询，得到所有符合类型的model
+			for (S2CellId cell : coverCells) {
+				Model preModel = getRDF4jModelFromSingleCellAndGeoTypes(storeDir, cell, geoTypes, time);
+				model.addAll(preModel);
+			}
+		}
+
+		// 对model按类型进行分解，并存到hashmap
+		HashMap<String, ArrayList<String>> result = getInfoFromRDF4jModel(model);
+		return result;
+	}
+
+	private static Model getRDF4jModelFromSingleCellAndGeoTypes(String storeDir, S2CellId cell, String[] geoTypes,
+			String time) {
+		String fileName = storeDir + "\\" + cell.id() + ".ntriples";
+		InputStream input;
+		Model curModel = null;
+		try {
+			input = new FileInputStream(fileName);
+			try {
+				curModel = Rio.parse(input, "", RDFFormat.NTRIPLES);
+			} catch (RDFParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedRDFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			return new LinkedHashModel();
+			// e.printStackTrace();
+		}
+		Model filterModel = new LinkedHashModel();
+		Repository store = new SailRepository(new MemoryStore());
+		store.initialize();
+		ValueFactory f = store.getValueFactory();
+		for (String geoType : geoTypes) {
+			IRI geoEntity = f.createIRI("http://ontology/" + geoType);
+			filterModel.addAll(curModel.filter(null, RDF.TYPE, geoEntity));
+		}
+		return filterModel;
+	}
+
+	/**
+	 * 按照时间获得多个cell里的所有类型的数据
+	 * @param storeDir
+	 * @param coverCells
+	 * @param time
+	 * @return
+	 */
+	private static Model getRDF4jModelFromAllCellAndGeoTypes(String storeDir, ArrayList<S2CellId> coverCells,String time) {
+		Repository store = new SailRepository(new MemoryStore());
+		store.initialize();
+		ValueFactory f = store.getValueFactory();
+		Model model = new LinkedHashModel();
+		IRI timeIRI = f.createIRI("http://time/id#" + time);
+		IRI ontologyContain = f.createIRI("http://ontology/contain");
+		for (S2CellId cell : coverCells) {
+			String fileName = storeDir + "\\" + cell.id() + ".ntriples";
+			InputStream input;
+			try {
+				input = new FileInputStream(fileName);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				continue;
+			}
+			Model geoModel = null;
+			Model timeModel = null;
+			try {
+				Model allModel = Rio.parse(input, "", RDFFormat.NTRIPLES);
+				 timeModel= allModel.filter(timeIRI, ontologyContain, null);
+				geoModel = allModel.filter(null,RDF.TYPE,null);
+			} catch (RDFParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedRDFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Set<Resource> geoSet = geoModel.subjects();
+			for (Value value : geoSet) {
+				if(!timeModel.contains(value)){
+					geoModel.remove(value);
+				}
+			}
+			model.addAll(geoModel);
+		}
+		return model;
 	}
 }
