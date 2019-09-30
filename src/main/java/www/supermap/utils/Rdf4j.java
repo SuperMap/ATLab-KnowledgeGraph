@@ -19,8 +19,13 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -457,85 +462,118 @@ public class Rdf4j {
 
 	private static Model getRDF4jModelFromSingleCellAndGeoTypes(String storeDir, S2CellId cell, String[] geoTypes,
 			String time) {
-		String fileName = storeDir + "\\" + cell.id() + ".ntriples";
-		InputStream input;
-		Model curModel = null;
-		try {
-			input = new FileInputStream(fileName);
+		Repository store = new SailRepository(new MemoryStore());
+		store.initialize();
+		ValueFactory f = store.getValueFactory();
+		Model model = new LinkedHashModel();
+		try (RepositoryConnection conn = store.getConnection()) {
+			String fileName = storeDir + "\\" + cell.id() + ".ntriples";
 			try {
-				curModel = Rio.parse(input, "", RDFFormat.NTRIPLES);
+				InputStream input = new FileInputStream(fileName);
+				conn.add(input, "", RDFFormat.NTRIPLES);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (RDFParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (UnsupportedRDFormatException e) {
+			} catch (RepositoryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			return new LinkedHashModel();
-			// e.printStackTrace();
+			String geoQueryString = "SELECT ?geo WHERE { <http://time/id#" + time
+					+ "> <http://ontology/contain> ?geo . }";
+			TupleQuery geoQuery = conn.prepareTupleQuery(geoQueryString);
+			TupleQuery typeQuery = conn.prepareTupleQuery(
+					"SELECT ?geo ?type WHERE { ?geo <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type . }");
+			try (TupleQueryResult geoResult = geoQuery.evaluate()) {
+				while (geoResult.hasNext()) {
+					BindingSet geoBinding = geoResult.next();
+					Value geoName = geoBinding.getValue("geo");
+					typeQuery.setBinding("geo", geoName);
+					try (TupleQueryResult typeResult = typeQuery.evaluate()) {
+						while (typeResult.hasNext()) {
+							BindingSet typeBinding = typeResult.next();
+							// System.out.println(typeBinding.getValue("geo"));
+							// System.out.println(typeBinding.getValue("type"));
+							Statement nameStatement = f.createStatement((Resource) typeBinding.getValue("geo"),
+									RDF.TYPE, typeBinding.getValue("type"));
+							model.add(nameStatement);
+						}
+
+					}
+				}
+			}
 		}
 		Model filterModel = new LinkedHashModel();
-		Repository store = new SailRepository(new MemoryStore());
-		store.initialize();
-		ValueFactory f = store.getValueFactory();
 		for (String geoType : geoTypes) {
 			IRI geoEntity = f.createIRI("http://ontology/" + geoType);
-			filterModel.addAll(curModel.filter(null, RDF.TYPE, geoEntity));
+			filterModel.addAll(model.filter(null, RDF.TYPE, geoEntity));
 		}
 		return filterModel;
 	}
 
 	/**
 	 * 按照时间获得多个cell里的所有类型的数据
+	 * 
 	 * @param storeDir
 	 * @param coverCells
 	 * @param time
 	 * @return
 	 */
-	private static Model getRDF4jModelFromAllCellAndGeoTypes(String storeDir, ArrayList<S2CellId> coverCells,String time) {
+	private static Model getRDF4jModelFromAllCellAndGeoTypes(String storeDir, ArrayList<S2CellId> coverCells,
+			String time) {
 		Repository store = new SailRepository(new MemoryStore());
 		store.initialize();
 		ValueFactory f = store.getValueFactory();
 		Model model = new LinkedHashModel();
-		IRI timeIRI = f.createIRI("http://time/id#" + time);
-		IRI ontologyContain = f.createIRI("http://ontology/contain");
 		for (S2CellId cell : coverCells) {
-			String fileName = storeDir + "\\" + cell.id() + ".ntriples";
-			InputStream input;
-			try {
-				input = new FileInputStream(fileName);
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				continue;
-			}
-			Model geoModel = null;
-			Model timeModel = null;
-			try {
-				Model allModel = Rio.parse(input, "", RDFFormat.NTRIPLES);
-				 timeModel= allModel.filter(timeIRI, ontologyContain, null);
-				geoModel = allModel.filter(null,RDF.TYPE,null);
-			} catch (RDFParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (UnsupportedRDFormatException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			Set<Resource> geoSet = geoModel.subjects();
-			for (Value value : geoSet) {
-				if(!timeModel.contains(value)){
-					geoModel.remove(value);
+			try (RepositoryConnection conn = store.getConnection()) {
+				String fileName = storeDir + "\\" + cell.id() + ".ntriples";
+				try {
+					InputStream input = new FileInputStream(fileName);
+					conn.add(input, "", RDFFormat.NTRIPLES);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					continue;
+				} catch (RDFParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (RepositoryException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				String geoQueryString = "SELECT ?geo WHERE { <http://time/id#" + time
+						+ "> <http://ontology/contain> ?geo . }";
+				TupleQuery geoQuery = conn.prepareTupleQuery(geoQueryString);
+				TupleQuery typeQuery = conn.prepareTupleQuery(
+						"SELECT ?geo ?type WHERE { ?geo <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type . }");
+				try (TupleQueryResult geoResult = geoQuery.evaluate()) {
+					while (geoResult.hasNext()) {
+						BindingSet geoBinding = geoResult.next();
+						Value geoName = geoBinding.getValue("geo");
+						typeQuery.setBinding("geo", geoName);
+						try (TupleQueryResult typeResult = typeQuery.evaluate()) {
+							while (typeResult.hasNext()) {
+								BindingSet typeBinding = typeResult.next();
+								// System.out.println(typeBinding.getValue("geo"));
+								// System.out.println(typeBinding.getValue("type"));
+								Statement nameStatement = f.createStatement((Resource) typeBinding.getValue("geo"),
+										RDF.TYPE, typeBinding.getValue("type"));
+								model.add(nameStatement);
+							}
+
+						}
+					}
 				}
 			}
-			model.addAll(geoModel);
+
 		}
 		return model;
 	}
